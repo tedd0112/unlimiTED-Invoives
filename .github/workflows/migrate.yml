@@ -1,12 +1,13 @@
 name: Database Migration
 
 on:
-  workflow_dispatch: # Manual trigger
-  push:
-    branches: [main]
-    paths:
-      - 'prisma/**'
-      - '.github/workflows/migrate.yml'
+  workflow_dispatch: # Manual trigger only
+    inputs:
+      database_url:
+        description: 'Database URL (postgresql://postgres:Kud%402003@localhost:5432/Invoice)'
+        required: true
+        type: string
+        default: 'postgresql://postgres:Kud%402003@localhost:5432/Invoice'
 
 jobs:
   migrate:
@@ -24,7 +25,7 @@ jobs:
           cache: 'npm'
       
       - name: Install dependencies
-        run: npm install
+        run: npm install --legacy-peer-deps
       
       - name: Generate Prisma Client
         run: npx prisma generate
@@ -32,10 +33,14 @@ jobs:
       - name: Run migrations
         run: npx prisma migrate deploy
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_URL: ${{ inputs.database_url }}
       
       - name: Migration status
         run: npx prisma migrate status
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_URL: ${{ inputs.database_url }}
+      
+      - name: Verify migration
+        if: success()
+        run: echo "✅ Migrations completed successfully!"
 
