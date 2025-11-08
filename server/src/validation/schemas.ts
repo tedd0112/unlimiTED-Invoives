@@ -5,6 +5,7 @@ export const clientCreateSchema = z.object({
   email: z.string().email(),
   phone: z.string().optional(),
   address: z.string().optional(),
+  tenantId: z.number().optional(), // Optional - used by system admin
 })
 
 export const clientUpdateSchema = clientCreateSchema.partial()
@@ -19,6 +20,7 @@ export const lineItemSchema = z.object({
 export const invoiceCreateSchema = z.object({
   invoiceNumber: z.string().min(1),
   clientId: z.string().min(1),
+  tenantId: z.number().optional(), // Optional - used by system admin
   status: z.enum(['paid', 'unpaid', 'overdue']).default('unpaid'),
   subtotal: z.number().nonnegative(),
   tax: z.number().nonnegative(),
@@ -32,10 +34,20 @@ export const invoiceCreateSchema = z.object({
 
 export const invoiceUpdateSchema = invoiceCreateSchema.partial()
 
-export const authRegisterSchema = z.object({
+export const authLoginSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(6),
+  password: z.string().min(1),
 })
 
-export const authLoginSchema = authRegisterSchema
+// Admin schemas
+export const createTenantSchema = z.object({
+  name: z.string().min(1),
+})
+
+export const createUserSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(6),
+  role: z.enum(['SYSTEM_ADMIN', 'COMPANY_ADMIN', 'ACCOUNTANT']),
+  tenantId: z.number().optional().nullable(),
+})
 

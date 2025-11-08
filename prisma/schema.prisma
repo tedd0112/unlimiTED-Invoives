@@ -7,53 +7,79 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Tenant {
+  id        Int       @id @default(autoincrement())
+  name      String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @default(now()) @updatedAt
+  clients   Client[]
+  invoices  Invoice[]
+  users     User[]
+}
+
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  password  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String   @id @default(cuid())
+  email        String   @unique
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  passwordHash String?
+  role         Role     @default(ACCOUNTANT)
+  tenantId     Int?
+  tenant       Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
 
 model Client {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   name      String
   email     String
   phone     String?
   address   String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  tenantId  Int
+  tenant    Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   invoices  Invoice[]
 }
 
 model Invoice {
-  id            String      @id @default(cuid())
-  invoiceNumber String      @unique
+  id            String        @id @default(cuid())
+  invoiceNumber String        @unique
   clientId      String
   status        InvoiceStatus @default(UNPAID)
-  subtotal      Decimal     @db.Decimal(12,2)
-  tax           Decimal     @db.Decimal(12,2)
-  discount      Decimal     @db.Decimal(12,2)
-  total         Decimal     @db.Decimal(12,2)
-  date          DateTime    @default(now())
+  subtotal      Decimal       @db.Decimal(12, 2)
+  tax           Decimal       @db.Decimal(12, 2)
+  discount      Decimal       @db.Decimal(12, 2)
+  total         Decimal       @db.Decimal(12, 2)
+  date          DateTime      @default(now())
   dueDate       DateTime?
   notes         String?
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  client        Client      @relation(fields: [clientId], references: [id])
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  tenantId      Int
+  client        Client        @relation(fields: [clientId], references: [id])
+  tenant        Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   lineItems     LineItem[]
+
+  @@unique([invoiceNumber, tenantId])
+  @@index([tenantId])
 }
 
 model LineItem {
-  id         String   @id @default(cuid())
-  invoiceId  String
+  id          String   @id @default(cuid())
+  invoiceId   String
   description String
   quantity    Int
-  unitPrice   Decimal  @db.Decimal(12,2)
-  total       Decimal  @db.Decimal(12,2)
+  unitPrice   Decimal  @db.Decimal(12, 2)
+  total       Decimal  @db.Decimal(12, 2)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+}
+
+enum Role {
+  SYSTEM_ADMIN
+  COMPANY_ADMIN
+  ACCOUNTANT
 }
 
 enum InvoiceStatus {
@@ -61,4 +87,3 @@ enum InvoiceStatus {
   UNPAID
   OVERDUE
 }
-
