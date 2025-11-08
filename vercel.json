@@ -5,7 +5,7 @@
   "framework": "nextjs",
   "regions": ["iad1"],
   "env": {
-    "DATABASE_URL": "@database_url",
+    "DATABASE_URL": "@postgresql://postgres:Kud%402003@localhost:5432/Invoice",
     "JWT_SECRET": "@jwt_secret",
     "JWT_EXPIRES_IN": "@jwt_expires_in",
     "CORS_ORIGIN": "@cors_origin",
