@@ -1,41 +1,63 @@
-import { redirect } from 'next/navigation'
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
 
-async function getCurrentUser() {
-  try {
-    const response = await fetch(`${API_BASE}/auth/me`, {
-      credentials: 'include',
-      cache: 'no-store',
-    })
+export default function AdminPage() {
+  const router = useRouter()
+  const [user, setUser] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
 
-    if (!response.ok) {
-      return null
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const response = await fetch(`${API_BASE}/auth/me`, {
+          credentials: 'include',
+        })
+
+        if (!response.ok) {
+          router.push('/login')
+          return
+        }
+
+        const data = await response.json()
+        
+        // Verify user is system admin
+        if (data.user.role !== 'SYSTEM_ADMIN') {
+          router.push('/dashboard')
+          return
+        }
+
+        setUser(data.user)
+      } catch (error) {
+        console.error('Auth check failed:', error)
+        router.push('/login')
+      } finally {
+        setLoading(false)
+      }
     }
 
-    const data = await response.json()
-    
-    // Verify user is system admin
-    if (data.user.role !== 'SYSTEM_ADMIN') {
-      return null
-    }
+    checkAuth()
+  }, [router])
 
-    return data
-  } catch {
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!user) {
     return null
   }
-}
-
-export default async function AdminPage() {
-  const userData = await getCurrentUser()
-
-  if (!userData || !userData.user) {
-    redirect('/login')
-  }
-
-  const { user } = userData
 
   return (
     <div className="container mx-auto p-6 space-y-6">

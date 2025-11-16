@@ -4,7 +4,14 @@ import bcrypt from 'bcryptjs'
 import { prisma } from '../prisma.js'
 import { createTenantSchema, createUserSchema } from '../validation/schemas.js'
 import { requireAuth, requireRole, AuthRequest } from '../middleware/auth.js'
-import { Role } from '@prisma/client'
+
+// Role type (matches Prisma enum)
+type Role = 'SYSTEM_ADMIN' | 'COMPANY_ADMIN' | 'ACCOUNTANT'
+const Role = {
+  SYSTEM_ADMIN: 'SYSTEM_ADMIN' as const,
+  COMPANY_ADMIN: 'COMPANY_ADMIN' as const,
+  ACCOUNTANT: 'ACCOUNTANT' as const,
+}
 
 export const router = Router()
 
@@ -75,7 +82,7 @@ router.post('/users', requireRole(Role.SYSTEM_ADMIN), async (req, res, next) => 
       data: {
         email: data.email,
         passwordHash,
-        role: data.role as Role,
+        role: data.role,
         tenantId: data.tenantId || null,
       },
       select: {

@@ -1,6 +1,15 @@
 import type { Request, Response, NextFunction } from 'express'
 import jwt from 'jsonwebtoken'
-import { Role } from '@prisma/client'
+
+// Define Role type (matches Prisma enum)
+type Role = 'SYSTEM_ADMIN' | 'COMPANY_ADMIN' | 'ACCOUNTANT'
+
+// Role constants for comparison
+const Role = {
+  SYSTEM_ADMIN: 'SYSTEM_ADMIN' as const,
+  COMPANY_ADMIN: 'COMPANY_ADMIN' as const,
+  ACCOUNTANT: 'ACCOUNTANT' as const,
+}
 
 export interface AuthRequest extends Request {
   user?: {

@@ -19,10 +19,13 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    e.stopPropagation()
     setError('')
     setLoading(true)
 
     try {
+      console.log('Attempting login...', { email, apiBase: API_BASE })
+      
       const response = await fetch(`${API_BASE}/auth/login`, {
         method: 'POST',
         headers: {
@@ -32,13 +35,26 @@ export default function LoginPage() {
         body: JSON.stringify({ email, password }),
       })
 
+      console.log('Login response status:', response.status)
+
       if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error || 'Login failed')
+        const errorText = await response.text()
+        let errorData
+        try {
+          errorData = JSON.parse(errorText)
+        } catch {
+          errorData = { error: errorText || 'Login failed' }
+        }
+        console.error('Login error:', errorData)
+        throw new Error(errorData.error || 'Login failed')
       }
 
       const data = await response.json()
+      console.log('Login success:', data)
       const user = data.user
+
+      // Small delay to ensure cookie is set
+      await new Promise(resolve => setTimeout(resolve, 100))
 
       // Redirect based on role
       if (user.role === 'SYSTEM_ADMIN') {
@@ -47,6 +63,7 @@ export default function LoginPage() {
         router.push('/dashboard')
       }
     } catch (err: any) {
+      console.error('Login exception:', err)
       setError(err.message || 'An error occurred during login')
       setLoading(false)
     }

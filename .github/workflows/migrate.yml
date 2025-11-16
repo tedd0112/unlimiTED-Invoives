@@ -1,0 +1,46 @@
+name: Database Migration
+
+on:
+  workflow_dispatch: # Manual trigger only
+    inputs:
+      database_url:
+        description: 'Database URL (postgresql://postgres:Kud%402003@localhost:5432/Invoice)'
+        required: true
+        type: string
+        default: 'postgresql://postgres:Kud%402003@localhost:5432/Invoice'
+
+jobs:
+  migrate:
+    name: Run Database Migrations
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+      
+      - name: Generate Prisma Client
+        run: npx prisma generate
+      
+      - name: Run migrations
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: ${{ inputs.database_url }}
+      
+      - name: Migration status
+        run: npx prisma migrate status
+        env:
+          DATABASE_URL: ${{ inputs.database_url }}
+      
+      - name: Verify migration
+        if: success()
+        run: echo "✅ Migrations completed successfully!"
+
